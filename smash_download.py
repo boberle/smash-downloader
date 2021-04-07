@@ -334,24 +334,38 @@ def download_song(db, song_id, output_directory, force=False):
     if not force and song_dic['download_time'] is not None:
         print("[I] Song already downloaded. Skipping")
         return
-    url = BRSTM_URL % song_id
-    print(f"[I] Downloading '{url}'")
-    response = urllib.request.urlopen(url)
-    binary_content = response.read()
-    slugified_path = _slugify_path(
-        game_id=game_dic['id'],
-        game_title=game_dic['title'],
-        song_id=song_dic['id'],
-        song_title=song_dic['title'],
-    )
-    path = os.path.join(output_directory, slugified_path + ".brstm")
-    dirname = os.path.dirname(path)
-    if not os.path.exists(dirname):
-        os.makedirs(dirname, exist_ok=True)
-    assert not os.path.exists(path)
-    with open(path, 'wb') as fh:
-        fh.write(binary_content)
-    print(f"[I] Song saved into {path}")
+    path = _get_song_path(game_dic=game_dic, song_dic=song_dic, output_directory=output_directory)
+    if os.path.exists(path):
+        print(
+            "[W]",
+            f"Song {game_dic['title']} -- {song_dic['title']} "
+            f"already downloaded into {path}.",
+            "I won't download it twice but I will mark it as downloaded."
+        )
+    else:
+        url = BRSTM_URL % song_id
+        print(f"[I] Downloading '{url}'")
+        max_retries = 10
+        for i in range(max_retries):
+            try:
+                response = urllib.request.urlopen(url)
+            except (urllib.error.URLError, http.client.IncompleteRead) as e:
+                print(
+                    "[E]", "Error when downloading the file:", str(e) + ".",
+                    f"Try {i+1}/{max_retries}"
+                )
+            else:
+                break
+        else:
+            print("[E]", "I can't download the song.  Skipping")
+            return
+        binary_content = response.read()
+        dirname = os.path.dirname(path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname, exist_ok=True)
+        with open(path, 'wb') as fh:
+            fh.write(binary_content)
+        print(f"[I] Song saved into {path}")
     song_dic['download_time'] = datetime.datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
 
 
