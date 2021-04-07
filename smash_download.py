@@ -80,6 +80,8 @@ import time
 import unicodedata
 import urllib.parse
 import urllib.request
+import urllib.error
+import http.client
 
 from bs4 import BeautifulSoup
 
@@ -147,6 +149,10 @@ def parse_args():
     group.add_argument(*random_arg[0], **random_arg[1])
     download_songs.add_argument(*output[0], **output[1])
     download_songs.add_argument(*force[0], **force[1])
+
+    repair_db = subparsers.add_parser("repair-db", help="mark songs that are "
+                                                        "downloaded as such")
+    repair_db.add_argument(*output[0], **output[1])
 
     args = parser.parse_args()
 
@@ -297,11 +303,22 @@ def _slugify(text):
     return text
 
 
-def slugify_path(game_id, game_title, song_id, song_title):
+def _slugify_path(game_id, game_title, song_id, song_title):
     """Return the path to store the song at."""
     game_title = _slugify(game_title)
     song_title = _slugify(song_title)
     return f"{game_id}{game_title}/{song_id}{song_title}"
+
+
+def _get_song_path(game_dic, song_dic, output_directory):
+    slugified_path = _slugify_path(
+        game_id=game_dic['id'],
+        game_title=game_dic['title'],
+        song_id=song_dic['id'],
+        song_title=song_dic['title'],
+    )
+    path = os.path.join(output_directory, slugified_path + ".brstm")
+    return path
 
 
 def download_song(db, song_id, output_directory, force=False):
@@ -321,7 +338,7 @@ def download_song(db, song_id, output_directory, force=False):
     print(f"[I] Downloading '{url}'")
     response = urllib.request.urlopen(url)
     binary_content = response.read()
-    slugified_path = slugify_path(
+    slugified_path = _slugify_path(
         game_id=game_dic['id'],
         game_title=game_dic['title'],
         song_id=song_dic['id'],
@@ -336,6 +353,25 @@ def download_song(db, song_id, output_directory, force=False):
         fh.write(binary_content)
     print(f"[I] Song saved into {path}")
     song_dic['download_time'] = datetime.datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
+
+
+def repair_db(db, output_directory):
+    """Mark songs with a file present on the file system as downloaded.
+
+    This function doesn't "unmark" songs if they aren't present on the file system.
+    """
+    print("[I]", "Checking for downloaded songs")
+    for game_id, game_dic in db.items():
+        for song_id_, song_dic in game_dic.get('songs', dict()).items():
+            path = _get_song_path(game_dic=game_dic, song_dic=song_dic, output_directory=output_directory)
+            if os.path.exists(path) and not song_dic['download_time']:
+                print(
+                    "[I]",
+                    f"Song {game_dic['title']} -- {song_dic['title']} "
+                    f"downloaded into {path} but not marked as downloaded.",
+                    "Marking it as downloaded."
+                )
+                song_dic['download_time'] = datetime.datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
 
 
 def main():
@@ -373,6 +409,8 @@ def main():
                 download_song(db, song_id, args.output_directory, force=args.force)
                 if args.random > 1 and i < args.random - 1:
                     snap()
+    elif args.command == "repair-db":
+        repair_db(db, args.output_directory)
     save_database(db)
 
 
