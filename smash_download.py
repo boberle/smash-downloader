@@ -101,6 +101,7 @@ DATABASE_FILE = "db.json"
                     'path': PATH,  # eg /song/456
                     'title': TITLE,
                     'download_time': DOWNLOAD_TIME_OR_NONE,
+                    'retries': OPTIONAL_NUMBER_OF_DOWNLOAD_RETRIES,
                 }
             ]
         }
@@ -344,28 +345,33 @@ def download_song(db, song_id, output_directory, force=False):
         )
     else:
         url = BRSTM_URL % song_id
-        print(f"[I] Downloading '{url}'")
         max_retries = 10
         for i in range(max_retries):
+            print(
+                f"[I] Downloading '{url}'.",
+                f"Try {i+1}/{max_retries}"
+            )
             try:
                 response = urllib.request.urlopen(url)
-            except (urllib.error.URLError, http.client.IncompleteRead) as e:
-                print(
-                    "[E]", "Error when downloading the file:", str(e) + ".",
-                    f"Try {i+1}/{max_retries}"
-                )
+            except urllib.error.URLError as e:
+                print("[E]", "Error when downloading the file:", str(e) + ".")
             else:
-                break
+                try:
+                    binary_content = response.read()
+                except http.client.IncompleteRead as e:
+                    print("[E]", "Error when downloading the file:", str(e) + ".")
+                else:
+                    break
         else:
             print("[E]", "I can't download the song.  Skipping")
             return
-        binary_content = response.read()
         dirname = os.path.dirname(path)
         if not os.path.exists(dirname):
             os.makedirs(dirname, exist_ok=True)
         with open(path, 'wb') as fh:
             fh.write(binary_content)
         print(f"[I] Song saved into {path}")
+        song_dic['retries'] = i
     song_dic['download_time'] = datetime.datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
 
 
