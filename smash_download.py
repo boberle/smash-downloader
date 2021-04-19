@@ -353,7 +353,7 @@ def download_song(db, song_id, output_directory, force=False):
             )
             try:
                 response = urllib.request.urlopen(url)
-            except urllib.error.URLError as e:
+            except (urllib.error.URLError, http.client.RemoteDisconnected) as e:
                 print("[E]", "Error when downloading the file:", str(e) + ".")
             else:
                 try:
