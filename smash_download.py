@@ -252,7 +252,10 @@ def update_song_list(db, game_id):
                 if song_id in game_dic.get('songs', dict())
                 else None
             )
-            print(f"[I] Found song {song_id} ({song_title}).")
+            print(
+                f"[I] Found song {song_id} ({song_title})."
+                + ((" It has already been downloaded on %s." % download_time) if download_time else "")
+            )
             song = dict(
                 id=song_id,
                 path=song_path,
@@ -352,7 +355,11 @@ def download_song(db, song_id, output_directory, force=False):
                 f"Try {i+1}/{max_retries}"
             )
             try:
-                response = urllib.request.urlopen(url)
+                request = urllib.request.Request(
+                        url,
+                        headers = {'User-Agent': 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0'},
+                )
+                response = urllib.request.urlopen(request)
             except (urllib.error.URLError, http.client.RemoteDisconnected) as e:
                 print("[E]", "Error when downloading the file:", str(e) + ".")
             else:
@@ -373,6 +380,7 @@ def download_song(db, song_id, output_directory, force=False):
         print(f"[I] Song saved into {path}")
         song_dic['retries'] = i
     song_dic['download_time'] = datetime.datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
+    save_database(db)
 
 
 def repair_db(db, output_directory):
@@ -404,7 +412,7 @@ def main():
         if args.game:
             update_song_list(db, args.game)
         else:
-            for i, game in enumerate(random.sample(db.keys(), args.random)):
+            for i, game in enumerate(random.sample([g for g in db.keys() if 'songs' not in db[g]], args.random)):
                 print(f"[I] Progress: {i+1}/{args.random}")
                 update_song_list(db, game)
                 if args.random > 1 and i < args.random - 1:
