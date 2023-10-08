@@ -1,0 +1,16 @@
+[tool.isort]
+profile="black"
+skip_gitignore=true
+
+[tool.mypy]
+strict=true
+disable_error_code="override"
+files = [
+    "src",
+    "tests",
+    "migration"
+]
+no_namespace_packages=true
+
+[tool.pytest.ini_options]
+pythonpath = "src"
