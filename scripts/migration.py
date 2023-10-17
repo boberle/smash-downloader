@@ -100,7 +100,7 @@ def _load_old_db(file: Path) -> OldDatabase:
 
 
 def load_md5_data(file: Path) -> dict[tuple[int, int], MD5Data]:
-    pat = re.compile(r"([0-9a-f]{32}) [* ].*?(/(\d+)_[^/]*?/(\d+)_[^/]*?\.brstm)")
+    pat = re.compile(r"([0-9a-f]{32}) [* ].*?(/(\d+)(?:_[^/]*)?/(\d+)(?:_[^/]*)?\.brstm)")
     rv: dict[tuple[int, int], MD5Data] = dict()
     for line in file.open():
         m = pat.fullmatch(line.strip())
