@@ -51,7 +51,7 @@ class Client(Protocol):
 class SmashClient(Client):
     base_url: str
     writer: Writer | None = None
-    snap: tuple[int, int] | None = (10, 20)
+    snap: tuple[int, int] | None = (60, 120)
 
     game_url_path_template: str = "/game/{id}"
     brstm_url_path_template: str = "/brstm/{id}"
