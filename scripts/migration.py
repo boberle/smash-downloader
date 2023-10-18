@@ -52,7 +52,9 @@ def migrate(
 ) -> None:
     md5_data = load_md5_data(md5_file)
     old_db = _load_old_db(old_db_file)
-    new_db = Database(site=Site(base_url="https://smashcustommusic.net"))
+    new_db = Database(
+        site=Site(base_url="https://smashcustommusic.net")
+    ).with_output_file(new_db_file)
 
     for old_game in old_db.games.values():
         new_songs: list[Song] = []
@@ -83,7 +85,7 @@ def migrate(
         )
         new_db.site.games.append(new_game)
 
-    new_db.save(new_db_file.open("w"))
+    new_db.save()
 
 
 def _load_old_db(file: Path) -> OldDatabase:

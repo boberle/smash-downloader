@@ -33,10 +33,13 @@ def test_downloader_multiple_files(
     downloader.download_brstm_files(max_count=4)
     assert (tmp_dir / "1726_3d_dot_game_heroes/32272_main_theme.brstm").exists()
     assert (tmp_dir / "1726_3d_dot_game_heroes/93397_the_lost_forest.brstm").exists()
-    assert (tmp_dir / "1726_3d_dot_game_heroes/96613_block_destruction.brstm").exists()
     assert (
         tmp_dir
         / "4126_ape_escape_big_mission_sarugetchu_daisakusen/77724_kessen_specter.brstm"
+    ).exists()
+    assert (
+        tmp_dir
+        / "4126_ape_escape_big_mission_sarugetchu_daisakusen/96008_sun_sun_beach.brstm"
     ).exists()
 
 

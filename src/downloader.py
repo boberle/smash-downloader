@@ -47,6 +47,7 @@ class Downloader:
             file_md5=md5,
         )
         logging.info(f"Music saved into {music_path} (md5 {md5}).")
+        self.db.save()
 
     def download_brstm_files(self, max_count: int) -> None:
         for song in self.db.get_songs_with_no_brstm_downloaded(max_count):

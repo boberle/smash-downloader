@@ -40,6 +40,7 @@ class Updater:
                 games_in_db[game_on_site.id].is_deleted_from_site = False
 
         self.db.site.download_timestamps.append(int(time.time()))
+        self.db.save()
 
     def update_game_song_list(self, game_id: int) -> None:
         game = self.db.get_game_from_id(game_id)
@@ -69,6 +70,7 @@ class Updater:
                 songs_in_db[song_on_site.id].is_deleted_from_site = False
 
         game.download_timestamps.append(int(time.time()))
+        self.db.save()
 
     def update_game_song_lists(self, max_count: int) -> None:
         for game in self.db.get_games_by_last_checked(max_count):

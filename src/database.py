@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import functools
-import io
 import json
+import logging
 from pathlib import Path
-from typing import Any
+from random import Random
+from typing import Any, Optional
 
 import pydantic
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, PrivateAttr
 
 
 class GameNotFound(Exception):
@@ -68,12 +69,31 @@ class Site(Base):
 class Database(BaseModel):
     site: Site
 
-    @staticmethod
-    def build_from_file(reader: io.TextIOBase) -> Database:
-        return pydantic.TypeAdapter(Database).validate_python(json.load(reader))
+    _random: Random = PrivateAttr(default_factory=Random)
+    _output_file: Optional[Path] = PrivateAttr(None)
 
-    def save(self, writer: io.TextIOBase) -> None:
-        writer.write(self.model_dump_json(indent=2))
+    @staticmethod
+    def build_from_file(file: Path) -> Database:
+        with file.open() as fh:
+            database = pydantic.TypeAdapter(Database).validate_python(json.load(fh))
+            logging.info(f"Databse read from '{file}'.")
+            database.with_output_file(file)
+            return database
+
+    def with_random(self, random: Random) -> Database:
+        self._random = random
+        return self
+
+    def with_output_file(self, output_file: Path) -> Database:
+        self._output_file = output_file
+        return self
+
+    def save(self) -> None:
+        if self._output_file is None:
+            return
+        with self._output_file.open("w") as fh:
+            fh.write(self.model_dump_json(indent=2))
+        logging.info(f"Database file saved into '{self._output_file}'")
 
     def get_game_from_id(self, game_id: int) -> Game:
         for game in self.site.games:
@@ -110,6 +130,7 @@ class Database(BaseModel):
                 if not song.is_deleted_from_site and not song.is_brstm_downloaded:
                     songs.append(song)
 
+        self._random.shuffle(songs)
         if count is None:
             return songs
         return songs[:count]

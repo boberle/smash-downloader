@@ -1,7 +1,6 @@
-import re
-from abc import ABC
 from dataclasses import dataclass
 from pathlib import Path
+from random import Random
 from tempfile import TemporaryDirectory
 from typing import Generator
 
@@ -62,7 +61,7 @@ def fake_database(testdata_directory: Path) -> Database:
                 songs=songs,
             )
         )
-    return Database(site=site)
+    return Database(site=site).with_random(Random(123))
 
 
 @pytest.fixture

@@ -1,3 +1,4 @@
+import random
 from pathlib import Path
 
 from database import Database, FileDownloadInfo, Game, Site, Song
@@ -89,7 +90,9 @@ def test_get_games_by_last_checked() -> None:
 
 
 def test_get_songs_with_no_brstm_downloaded() -> None:
-    db = Database(site=Site(base_url="http://idontexist.net"))
+    db = Database(site=Site(base_url="http://idontexist.net")).with_random(
+        random=random.Random(123)
+    )
     song1 = Song(
         id=1,
         title="1",
@@ -125,8 +128,8 @@ def test_get_songs_with_no_brstm_downloaded() -> None:
 
     musics = db.get_songs_with_no_brstm_downloaded(2)
     assert len(musics) == 2
-    assert list(map(lambda m: m.id, musics)) == [5, 3]
+    assert list(map(lambda m: m.id, musics)) == [2, 3]
 
     musics = db.get_songs_with_no_brstm_downloaded(None)
     assert len(musics) == 3
-    assert list(map(lambda m: m.id, musics)) == [5, 3, 2]
+    assert list(map(lambda m: m.id, musics)) == [2, 3, 5]

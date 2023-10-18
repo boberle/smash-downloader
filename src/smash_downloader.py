@@ -25,12 +25,9 @@ def download_musics(
     ),
 ) -> None:
     client = SmashClient(base_url=BASE_URL)
-    with db_file.open() as fh:
-        db = Database.build_from_file(fh)
+    db = _get_db(db_file)
     app = App(client=client, db=db)
-    app.download_musics(
-        output_dir=output_dir, max_count=max_count, db_output_file=db_file
-    )
+    app.download_musics(output_dir=output_dir, max_count=max_count)
 
 
 @app.command()
@@ -49,7 +46,7 @@ def update_game_list(
     )
     db = _get_db(db_file)
     app = App(client=client, db=db)
-    app.update_game_list(db_file)
+    app.update_game_list()
 
 
 @app.command()
@@ -69,22 +66,20 @@ def update_game_song_lists(
     )
     db = _get_db(db_file)
     app = App(client=client, db=db)
-    app.update_game_song_lists(max_count=max_count, db_output_file=db_file)
+    app.update_game_song_lists(max_count=max_count)
 
 
 def _get_db(db_file: Path) -> Database:
     if db_file.exists():
-        with db_file.open() as fh:
-            db = Database.build_from_file(fh)
-            logging.info(f"DB read from '{db_file}'.")
-            return db
+        db = Database.build_from_file(db_file)
+        return db
     else:
-        logging.info("New DB created.")
+        logging.info("New database created.")
         return Database(
             site=Site(
                 base_url=BASE_URL,
             )
-        )
+        ).with_output_file(db_file)
 
 
 @dataclass
@@ -92,27 +87,17 @@ class App:
     client: Client
     db: Database
 
-    def update_game_list(self, db_output_file: Path) -> None:
+    def update_game_list(self) -> None:
         updater = Updater(client=self.client, db=self.db)
         updater.update_game_list()
-        self._save_db(db_output_file=db_output_file)
 
-    def update_game_song_lists(self, max_count: int, db_output_file: Path) -> None:
+    def update_game_song_lists(self, max_count: int) -> None:
         updater = Updater(client=self.client, db=self.db)
         updater.update_game_song_lists(max_count=max_count)
-        self._save_db(db_output_file=db_output_file)
 
-    def download_musics(
-        self, output_dir: Path, max_count: int, db_output_file: Path
-    ) -> None:
+    def download_musics(self, output_dir: Path, max_count: int) -> None:
         downloader = Downloader(client=self.client, db=self.db, output_dir=output_dir)
         downloader.download_brstm_files(max_count=max_count)
-        self._save_db(db_output_file=db_output_file)
-
-    def _save_db(self, db_output_file: Path) -> None:
-        with db_output_file.open("w") as fh:
-            self.db.save(writer=fh)
-        logging.info(f"DB file saved into '{db_output_file}'")
 
 
 if __name__ == "__main__":
