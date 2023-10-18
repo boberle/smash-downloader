@@ -1,3 +1,4 @@
+import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -74,8 +75,11 @@ def update_game_song_lists(
 def _get_db(db_file: Path) -> Database:
     if db_file.exists():
         with db_file.open() as fh:
-            return Database.build_from_file(fh)
+            db = Database.build_from_file(fh)
+            logging.info(f"DB read from '{db_file}'.")
+            return db
     else:
+        logging.info("New DB created.")
         return Database(
             site=Site(
                 base_url=BASE_URL,
@@ -91,22 +95,24 @@ class App:
     def update_game_list(self, db_output_file: Path) -> None:
         updater = Updater(client=self.client, db=self.db)
         updater.update_game_list()
-        with db_output_file.open("w") as fh:
-            self.db.save(writer=fh)
+        self._save_db(db_output_file=db_output_file)
 
     def update_game_song_lists(self, max_count: int, db_output_file: Path) -> None:
         updater = Updater(client=self.client, db=self.db)
         updater.update_game_song_lists(max_count=max_count)
-        with db_output_file.open("w") as fh:
-            self.db.save(writer=fh)
+        self._save_db(db_output_file=db_output_file)
 
     def download_musics(
         self, output_dir: Path, max_count: int, db_output_file: Path
     ) -> None:
         downloader = Downloader(client=self.client, db=self.db, output_dir=output_dir)
         downloader.download_brstm_files(max_count=max_count)
+        self._save_db(db_output_file=db_output_file)
+
+    def _save_db(self, db_output_file: Path) -> None:
         with db_output_file.open("w") as fh:
             self.db.save(writer=fh)
+        logging.info(f"DB file saved into '{db_output_file}'")
 
 
 if __name__ == "__main__":
