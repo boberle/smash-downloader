@@ -51,7 +51,7 @@ class Client(Protocol):
 class SmashClient(Client):
     base_url: str
     writer: Writer | None = None
-    snap: tuple[int, int] | None = (60, 120)
+    nap_time: tuple[int, int] | None = (60, 120)
 
     game_url_path_template: str = "/game/{id}"
     brstm_url_path_template: str = "/brstm/{id}"
@@ -67,7 +67,7 @@ class SmashClient(Client):
         self._session.headers.update(headers)
 
     def get_game_list(self) -> list[GameInfo]:
-        self._snap()
+        self._nap()
         url = self.base_url
         logging.debug(f"Downloading from {url}.")
         result = self._session.get(url)
@@ -78,7 +78,7 @@ class SmashClient(Client):
         return Parser.get_game_list_from_home_page(html)
 
     def get_song_list(self, game_id: int) -> list[SongInfo]:
-        self._snap()
+        self._nap()
         url = urljoin(self.base_url, self.game_url_path_template.format(id=game_id))
         logging.debug(f"Downloading from {url}.")
         result = self._session.get(url)
@@ -89,7 +89,7 @@ class SmashClient(Client):
         return Parser.get_song_list_from_game_page(html)
 
     def get_brstm_file(self, song_id: int) -> bytes:
-        self._snap()
+        self._nap()
         url = urljoin(self.base_url, self.brstm_url_path_template.format(id=song_id))
         logging.debug(f"Downloading from {url}.")
         result = self._session.get(url)
@@ -97,10 +97,10 @@ class SmashClient(Client):
         logging.info(f"Downloaded from {url}.")
         return binary
 
-    def _snap(self) -> None:
-        if not self._first_call and self.snap is not None:
-            duration = random.randint(self.snap[0], self.snap[1])
-            logging.info(f"Snapping for {duration} seconds.")
+    def _nap(self) -> None:
+        if not self._first_call and self.nap_time is not None:
+            duration = random.randint(self.nap_time[0], self.nap_time[1])
+            logging.info(f"Napping for {duration} seconds.")
             time.sleep(duration)
         self._first_call = False
 
