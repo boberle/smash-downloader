@@ -3,6 +3,7 @@ from __future__ import annotations
 import functools
 import json
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 from random import Random
 from typing import Any, Optional
@@ -146,3 +147,45 @@ class Database(BaseModel):
         if a.last_checked == b.last_checked:
             return 0
         return 1
+
+    def get_statistics(self) -> DatabaseStatistics:
+        stats = DatabaseStatistics()
+        for game in self.site.games:
+            stats.games += 1
+            if len(game.download_timestamps) == 0:
+                stats.games_not_visited += 1
+            else:
+                stats.games_visited += 1
+                if stats.game_oldest_visit == 0:
+                    stats.game_oldest_visit = game.download_timestamps[-1]
+                else:
+                    stats.game_oldest_visit = min(
+                        stats.game_oldest_visit, game.download_timestamps[-1]
+                    )
+            if game.is_deleted_from_site:
+                stats.games_deleted_from_site += 1
+
+            for song in game.songs:
+                stats.songs += 1
+
+                if song.is_brstm_downloaded:
+                    stats.songs_downloaded += 1
+                else:
+                    stats.songs_not_downloaded += 1
+                if song.is_deleted_from_site:
+                    stats.songs_deleted_from_site += 1
+
+        return stats
+
+
+@dataclass
+class DatabaseStatistics:
+    games: int = 0
+    games_visited: int = 0
+    games_not_visited: int = 0
+    games_deleted_from_site: int = 0
+    songs: int = 0
+    songs_downloaded: int = 0
+    songs_not_downloaded: int = 0
+    songs_deleted_from_site: int = 0
+    game_oldest_visit: int = 0

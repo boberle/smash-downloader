@@ -1,3 +1,4 @@
+import datetime
 import logging
 import time
 from dataclasses import dataclass
@@ -67,6 +68,25 @@ def update_game_song_lists(
     db = _get_db(db_file)
     app = App(client=client, db=db)
     app.update_game_song_lists(max_count=max_count)
+
+
+@app.command()
+def statistics(
+    db_file: Path = typer.Option(..., help="json database file"),
+) -> None:
+    db = _get_db(db_file)
+    stats = db.get_statistics()
+    print(f"games: {stats.games}")
+    print(f"games visited: {stats.games_visited}")
+    print(f"games not visited: {stats.games_not_visited}")
+    print(f"games deleted from site: {stats.games_deleted_from_site}")
+    print(
+        f"game oldest visit: {datetime.datetime.fromtimestamp(stats.game_oldest_visit).isoformat()}"
+    )
+    print(f"songs: {stats.songs}")
+    print(f"songs downloaded: {stats.songs_downloaded}")
+    print(f"songs not downloaded: {stats.songs_not_downloaded}")
+    print(f"songs deleted from site: {stats.songs_deleted_from_site}")
 
 
 def _get_db(db_file: Path) -> Database:
