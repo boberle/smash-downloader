@@ -24,8 +24,11 @@ def download_musics(
     output_dir: Path = typer.Option(
         ..., help="directory in which to save the music files"
     ),
+    nap_time: tuple[int, int] = typer.Option(
+        (60, 120), help="min/max nap time between two downloads"
+    ),
 ) -> None:
-    client = SmashClient(base_url=BASE_URL)
+    client = SmashClient(base_url=BASE_URL, nap_time=nap_time)
     db = _get_db(db_file)
     app = App(client=client, db=db)
     app.download_musics(output_dir=output_dir, max_count=max_count)
@@ -37,6 +40,9 @@ def update_game_list(
     output_dir: Path = typer.Option(
         ..., help="directory in which to save the html files"
     ),
+    nap_time: tuple[int, int] = typer.Option(
+        (60, 120), help="min/max nap time between two downloads"
+    ),
 ) -> None:
     client = SmashClient(
         base_url=BASE_URL,
@@ -44,6 +50,7 @@ def update_game_list(
             output_dir=output_dir,
             timestamp=int(time.time()),
         ),
+        nap_time=nap_time,
     )
     db = _get_db(db_file)
     app = App(client=client, db=db)
@@ -57,6 +64,9 @@ def update_game_song_lists(
     output_dir: Path = typer.Option(
         ..., help="directory in which to save the html files"
     ),
+    nap_time: tuple[int, int] = typer.Option(
+        (60, 120), help="min/max nap time between two downloads"
+    ),
 ) -> None:
     client = SmashClient(
         base_url=BASE_URL,
@@ -64,6 +74,7 @@ def update_game_song_lists(
             output_dir=output_dir,
             timestamp=int(time.time()),
         ),
+        nap_time=nap_time,
     )
     db = _get_db(db_file)
     app = App(client=client, db=db)
