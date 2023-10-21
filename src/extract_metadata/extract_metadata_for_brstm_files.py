@@ -1,0 +1,122 @@
+import json
+import os
+import time
+from pathlib import Path
+
+import typer
+from pydantic.json import pydantic_encoder
+
+from extract_metadata.checker import FFMPEGChecker
+from extract_metadata.counters import Counters
+from extract_metadata.entry import Entry, read_entries
+from extract_metadata.identifier import MplayerIdentifier
+from database import Database, Song, SongNotFound, Game
+
+app = typer.Typer()
+
+
+@app.command()
+def extract_brstm_data(
+    root_dir: Path = typer.Option(
+        ...,
+        help="root dir where to recursively look for brstm files. Paths will be relative to this dir",
+    ),
+    db_file: Path = typer.Option(
+        ...,
+        help="database file (read only)",
+    ),
+    output_file: Path = typer.Option(
+        ...,
+        help="output file. If already exists, metadata will not be extracted again for file already present, except if --force is set",
+    ),
+    force: bool = typer.Option(
+        False,
+        help="re-extract data even if metadata are already extracted for the file",
+    ),
+) -> None:
+    if output_file.exists():
+        entries = read_entries(file=output_file)
+    else:
+        entries = []
+    db = Database.build_from_file(file=db_file)
+    entries, counters = extract(
+        root_dir=root_dir,
+        db=db,
+        entry_list=entries,
+        force=force,
+    )
+    with open(output_file, "w") as fh:
+        json.dump(entries, fh, default=pydantic_encoder)
+    counters.print()
+
+
+def extract(
+    root_dir: Path, db: Database, entry_list: list[Entry], force: bool
+) -> tuple[list[Entry], Counters]:
+    entries = {entry.path: entry for entry in entry_list}
+
+    files = get_files(root_dir=root_dir)
+
+    files2songs: dict[Path, tuple[Game, Song]] = dict()
+    for file in files:
+        try:
+            files2songs[file] = db.get_song_from_downloaded_path(file)
+        except SongNotFound:
+            raise
+
+    counters = Counters()
+    for entry_path in entries.keys():
+        if entry_path not in files:
+            counters.not_found_files.append(entry_path)
+
+    checker = FFMPEGChecker()
+    identifier = MplayerIdentifier()
+
+    for file in files:
+        if not force and file in entries:
+            counters.left_untouched.append(file)
+            continue
+
+        full_path = root_dir / file
+        entry = Entry(
+            path=file, timestamp=int(time.time()), size=os.path.getsize(full_path)
+        )
+        entries[file] = entry
+
+        checker_results = checker.check(full_path)
+        if not checker_results.success:
+            counters.checker_errors.append(file)
+            entry.error = True
+            continue
+
+        identifier_results = identifier.extract_metadata(full_path)
+        if identifier_results is None:
+            counters.identifier_errors.append(file)
+            entry.error = True
+            continue
+        else:
+            entry.loop_start = identifier_results.loop_start
+            entry.loop_end = identifier_results.loop_end
+            entry.duration = identifier_results.duration
+            game, song = files2songs[file]
+            entry.title = song.title
+            entry.game_title = game.title
+            counters.successes.append(full_path)
+
+    return list(entries.values()), counters
+
+
+def get_files(root_dir: Path) -> set[Path]:
+    paths: set[Path] = set()
+    for root, dnames, fnames in os.walk(root_dir):
+        for fname in fnames:
+            full_path = Path(os.path.join(root, fname))
+            if full_path.suffix != ".brstm":
+                continue
+            path = Path(os.path.relpath(full_path, root_dir))
+            paths.add(path)
+    return paths
+
+
+if __name__ == "__main__":
+    app()
