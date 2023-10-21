@@ -116,6 +116,13 @@ class Database(BaseModel):
                     return game
         raise SongNotFound
 
+    def get_song_from_downloaded_path(self, path: Path) -> tuple[Game, Song]:
+        for game in self.site.games:
+            for song in game.songs:
+                if song.brstm_download_info is not None and song.brstm_download_info.location == path:
+                    return game, song
+        raise SongNotFound
+
     def get_games_by_last_checked(self, count: int | None) -> list[Game]:
         """Return games starting with the not checked, then the oldest checked."""
         filtered = filter(lambda g: not g.is_deleted_from_site, self.site.games)
