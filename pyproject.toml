@@ -6,10 +6,7 @@ skip_gitignore=true
 strict=true
 disable_error_code="override"
 files = [
-    "src",
-    "tests",
-    "scripts",
-    "extract_metadata"
+    "src"
 ]
 no_namespace_packages=true
 

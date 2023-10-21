@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pytest
 
-from client import Client
-from database import Database, Game, Site
-from updater import Updater
+from smashdown.client import Client
+from smashdown.database import Database, Game, Site
+from smashdown.updater import Updater
 
 
 @pytest.mark.parametrize(

@@ -9,7 +9,7 @@ import pydantic
 import typer
 from pydantic import BaseModel
 
-from src.database import Database, FileDownloadInfo, Game, Site, Song  # type:ignore
+from smashdown.database import Database, FileDownloadInfo, Game, Site, Song
 
 
 class OldSong(BaseModel):

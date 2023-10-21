@@ -6,10 +6,8 @@ from typing import Generator
 
 import pytest
 
-from client import Client, GameInfo, Parser, SongInfo
-from database import Database, Game, Site, Song
-
-# from downloader import DownloadError, Requester
+from smashdown.client import Client, GameInfo, Parser, SongInfo
+from smashdown.database import Database, Game, Site, Song
 
 
 @pytest.fixture

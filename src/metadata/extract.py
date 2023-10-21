@@ -6,11 +6,11 @@ from pathlib import Path
 import typer
 from pydantic.json import pydantic_encoder
 
-from extract_metadata.checker import FFMPEGChecker
-from extract_metadata.counters import Counters
-from extract_metadata.entry import Entry, read_entries
-from extract_metadata.identifier import MplayerIdentifier
-from database import Database, Song, SongNotFound, Game
+from metadata.checker import FFMPEGChecker
+from metadata.counters import Counters
+from metadata.entry import Entry, read_entries
+from metadata.identifier import MplayerIdentifier
+from smashdown.database import Database, Game, Song, SongNotFound
 
 app = typer.Typer()
 

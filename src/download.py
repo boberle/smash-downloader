@@ -6,10 +6,10 @@ from pathlib import Path
 
 import typer
 
-from client import Client, FileWriter, SmashClient
-from database import Database, Site
-from downloader import Downloader
-from updater import Updater
+from smashdown.client import Client, FileWriter, SmashClient
+from smashdown.database import Database, Site
+from smashdown.downloader import Downloader
+from smashdown.updater import Updater
 
 BASE_URL = "http://smashcustommusic.net"
 

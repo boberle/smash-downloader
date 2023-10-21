@@ -119,7 +119,10 @@ class Database(BaseModel):
     def get_song_from_downloaded_path(self, path: Path) -> tuple[Game, Song]:
         for game in self.site.games:
             for song in game.songs:
-                if song.brstm_download_info is not None and song.brstm_download_info.location == path:
+                if (
+                    song.brstm_download_info is not None
+                    and song.brstm_download_info.location == path
+                ):
                     return game, song
         raise SongNotFound
 

@@ -2,8 +2,8 @@ import logging
 import time
 from dataclasses import dataclass
 
-from client import Client, GameInfo, SongInfo
-from database import Database, Game, Song
+from smashdown.client import Client, GameInfo, SongInfo
+from smashdown.database import Database, Game, Song
 
 logging.basicConfig(level=logging.DEBUG)
 

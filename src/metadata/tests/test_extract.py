@@ -2,9 +2,9 @@ from pathlib import Path
 
 import pytest
 
-from database import Database, Site, Game, Song, FileDownloadInfo
-from extract_metadata.entry import Entry
-from extract_metadata.extract_metadata_for_brstm_files import extract
+from metadata.entry import Entry
+from metadata.extract import extract
+from smashdown.database import Database, FileDownloadInfo, Game, Site, Song
 
 
 @pytest.fixture

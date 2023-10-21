@@ -2,11 +2,12 @@ import time
 from pathlib import Path
 
 import pytest
-from conftest import build_site_with_games_and_songs
 
-from client import Client
-from database import Database, Game, Site, Song
-from updater import Updater
+from smashdown.client import Client
+from smashdown.database import Database, Game, Site, Song
+from smashdown.updater import Updater
+
+from .conftest import build_site_with_games_and_songs
 
 
 @pytest.mark.parametrize(

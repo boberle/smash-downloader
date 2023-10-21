@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from extract_metadata.checker import FFMPEGChecker
+from metadata.checker import FFMPEGChecker
 
 
 def test_success(testdata_directory: Path) -> None:

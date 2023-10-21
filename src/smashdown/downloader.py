@@ -6,8 +6,8 @@ import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 
-from client import Client
-from database import Database, FileDownloadInfo, Game, Song
+from smashdown.client import Client
+from smashdown.database import Database, FileDownloadInfo, Game, Song
 
 
 def remove_diacritics(text: str) -> str:

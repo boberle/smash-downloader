@@ -1,7 +1,7 @@
 import random
 from pathlib import Path
 
-from database import Database, FileDownloadInfo, Game, Site, Song
+from smashdown.database import Database, FileDownloadInfo, Game, Site, Song
 
 
 def test_get_game_by_id() -> None:

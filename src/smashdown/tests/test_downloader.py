@@ -1,9 +1,9 @@
 import time
 from pathlib import Path
 
-from client import Client
-from database import Database
-from downloader import Downloader
+from smashdown.client import Client
+from smashdown.database import Database
+from smashdown.downloader import Downloader
 
 
 def test_downloader(

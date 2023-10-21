@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from client import GameInfo, Parser, SongInfo
+from smashdown.client import GameInfo, Parser, SongInfo
 
 
 def test_get_game_list_from_home_page(testdata_directory: Path) -> None:

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import requests_mock
 
-from client import FileWriter, SmashClient
+from smashdown.client import FileWriter, SmashClient
 
 
 def test_get_game_list(testdata_directory: Path, tmp_dir: Path) -> None:
