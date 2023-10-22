@@ -10,6 +10,7 @@ import typer
 from pydantic import BaseModel
 
 from smashdown.database import Database, FileDownloadInfo, Game, Site, Song
+from util import url_parser
 
 
 class OldSong(BaseModel):
@@ -44,6 +45,11 @@ app = typer.Typer()
 
 @app.command()
 def migrate(
+    base_url: str = typer.Option(
+        ...,
+        help="the base url of the site, for example 'http://www.smashcustommusic.com'",
+        parser=url_parser,
+    ),
     old_db_file: Path = typer.Option(..., help="old db file"),
     new_db_file: Path = typer.Option(..., help="new db file"),
     md5_file: Path = typer.Option(
@@ -52,9 +58,7 @@ def migrate(
 ) -> None:
     md5_data = load_md5_data(md5_file)
     old_db = _load_old_db(old_db_file)
-    new_db = Database(
-        site=Site(base_url="https://smashcustommusic.net")
-    ).with_output_file(new_db_file)
+    new_db = Database(site=Site(base_url=base_url)).with_output_file(new_db_file)
 
     for old_game in old_db.games.values():
         new_songs: list[Song] = []
