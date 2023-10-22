@@ -5,20 +5,22 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import typer
+from pydantic import HttpUrl
 
 from smashdown.client import Client, FileWriter, SmashClient
 from smashdown.database import Database, Site
 from smashdown.downloader import Downloader
 from smashdown.updater import Updater
 
-BASE_URL = "http://smashcustommusic.net"
-
-
 app = typer.Typer(add_completion=False)
 
 
 @app.command()
 def download_musics(
+    base_url: HttpUrl = typer.Option(
+        ...,
+        help="the base url of the site, for example 'http://www.smashcustommusic.com'",
+    ),
     db_file: Path = typer.Option(..., help="json database file"),
     max_count: int = typer.Option(..., help="maximum number of file to download"),
     output_dir: Path = typer.Option(
@@ -28,14 +30,18 @@ def download_musics(
         (60, 120), help="min/max nap time between two downloads"
     ),
 ) -> None:
-    client = SmashClient(base_url=BASE_URL, nap_time=nap_time)
-    db = _get_db(db_file)
+    client = SmashClient(base_url=str(base_url), nap_time=nap_time)
+    db = _get_db(db_file, base_url=base_url)
     app = App(client=client, db=db)
     app.download_musics(output_dir=output_dir, max_count=max_count)
 
 
 @app.command()
 def update_game_list(
+    base_url: HttpUrl = typer.Option(
+        ...,
+        help="the base url of the site, for example 'http://www.smashcustommusic.com'",
+    ),
     db_file: Path = typer.Option(..., help="json database file"),
     output_dir: Path = typer.Option(
         ..., help="directory in which to save the html files"
@@ -45,20 +51,24 @@ def update_game_list(
     ),
 ) -> None:
     client = SmashClient(
-        base_url=BASE_URL,
+        base_url=str(base_url),
         writer=FileWriter(
             output_dir=output_dir,
             timestamp=int(time.time()),
         ),
         nap_time=nap_time,
     )
-    db = _get_db(db_file)
+    db = _get_db(db_file, base_url=base_url)
     app = App(client=client, db=db)
     app.update_game_list()
 
 
 @app.command()
 def update_game_song_lists(
+    base_url: HttpUrl = typer.Option(
+        ...,
+        help="the base url of the site, for example 'http://www.smashcustommusic.com'",
+    ),
     db_file: Path = typer.Option(..., help="json database file"),
     max_count: int = typer.Option(..., help="maximum number of file to download"),
     output_dir: Path = typer.Option(
@@ -69,14 +79,14 @@ def update_game_song_lists(
     ),
 ) -> None:
     client = SmashClient(
-        base_url=BASE_URL,
+        base_url=str(base_url),
         writer=FileWriter(
             output_dir=output_dir,
             timestamp=int(time.time()),
         ),
         nap_time=nap_time,
     )
-    db = _get_db(db_file)
+    db = _get_db(db_file, base_url=base_url)
     app = App(client=client, db=db)
     app.update_game_song_lists(max_count=max_count)
 
@@ -85,7 +95,7 @@ def update_game_song_lists(
 def statistics(
     db_file: Path = typer.Option(..., help="json database file"),
 ) -> None:
-    db = _get_db(db_file)
+    db = Database.build_from_file(db_file)
     stats = db.get_statistics()
     print(f"games: {stats.games}")
     print(f"games visited: {stats.games_visited}")
@@ -100,7 +110,7 @@ def statistics(
     print(f"songs deleted from site: {stats.songs_deleted_from_site}")
 
 
-def _get_db(db_file: Path) -> Database:
+def _get_db(db_file: Path, base_url: HttpUrl) -> Database:
     if db_file.exists():
         db = Database.build_from_file(db_file)
         return db
@@ -108,7 +118,7 @@ def _get_db(db_file: Path) -> Database:
         logging.info("New database created.")
         return Database(
             site=Site(
-                base_url=BASE_URL,
+                base_url=str(base_url),
             )
         ).with_output_file(db_file)
 
