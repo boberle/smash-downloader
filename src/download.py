@@ -14,7 +14,7 @@ from smashdown.updater import Updater
 BASE_URL = "http://smashcustommusic.net"
 
 
-app = typer.Typer()
+app = typer.Typer(add_completion=False)
 
 
 @app.command()

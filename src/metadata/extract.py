@@ -12,7 +12,7 @@ from metadata.entry import Entry, read_entries
 from metadata.identifier import MplayerIdentifier
 from smashdown.database import Database, Game, Song, SongNotFound
 
-app = typer.Typer()
+app = typer.Typer(add_completion=False)
 
 
 @app.command()
