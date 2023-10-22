@@ -5,8 +5,6 @@ from dataclasses import dataclass
 from smashdown.client import Client, GameInfo, SongInfo
 from smashdown.database import Database, Game, Song
 
-logging.basicConfig(level=logging.DEBUG)
-
 
 @dataclass
 class Updater:
