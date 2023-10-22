@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import time
 from pathlib import Path
@@ -35,8 +36,10 @@ def extract_brstm_data(
     ),
 ) -> None:
     if output_file.exists():
+        logging.info(f"Reading entries from '{output_file}")
         entries = read_entries(file=output_file)
     else:
+        logging.info(f"Creating a new entry list (file '{output_file}' doesn't exist')")
         entries = []
     db = Database.build_from_file(file=db_file)
     entries, counters = extract(
@@ -46,6 +49,7 @@ def extract_brstm_data(
         force=force,
     )
     with open(output_file, "w") as fh:
+        logging.info(f"Writing entries into '{output_file}'")
         json.dump(entries, fh, default=pydantic_encoder)
     counters.print()
 
@@ -67,13 +71,18 @@ def extract(
     counters = Counters()
     for entry_path in entries.keys():
         if entry_path not in files:
+            logging.warning(f"Entry path '{entry_path}' not found on file system.")
             counters.not_found_files.append(entry_path)
 
     checker = FFMPEGChecker()
     identifier = MplayerIdentifier()
 
-    for file in files:
+    for i, file in enumerate(files, start=1):
+        logging.debug(f"Processing file '{file}' ({i}/{len(files)})")
         if not force and file in entries:
+            logging.debug(
+                f"File '{file}' find in entry list. Left untouched (use --force to update)."
+            )
             counters.left_untouched.append(file)
             continue
 
@@ -85,12 +94,14 @@ def extract(
 
         checker_results = checker.check(full_path)
         if not checker_results.success:
+            logging.warning(f"Checker error for '{file}'.")
             counters.checker_errors.append(file)
             entry.error = True
             continue
 
         identifier_results = identifier.extract_metadata(full_path)
         if identifier_results is None:
+            logging.warning(f"Identifier error for '{file}'.")
             counters.identifier_errors.append(file)
             entry.error = True
             continue
@@ -101,6 +112,7 @@ def extract(
             game, song = files2songs[file]
             entry.title = song.title
             entry.game_title = game.title
+            logging.debug(f"File '{file}' successfully identified.")
             counters.successes.append(full_path)
 
     return list(entries.values()), counters
@@ -119,4 +131,5 @@ def get_files(root_dir: Path) -> set[Path]:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     app()
