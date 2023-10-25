@@ -53,13 +53,15 @@ class Downloader:
         for song in self.db.get_songs_with_no_brstm_downloaded(max_count):
             self.download_brstm_file(song=song)
 
-    def get_game_path(self, game: Game) -> Path:
+    @staticmethod
+    def get_game_path(game: Game) -> Path:
         slug = slugify(game.title)
         if slug:
             slug = "_" + slug
         return Path(f"{game.id}{slug}")
 
-    def get_music_path(self, game_path: Path, song: Song) -> Path:
+    @staticmethod
+    def get_music_path(game_path: Path, song: Song) -> Path:
         slug = slugify(song.title)
         if slug:
             slug = "_" + slug

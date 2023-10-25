@@ -1,8 +1,10 @@
 import time
 from pathlib import Path
 
+import pytest
+
 from smashdown.client import Client
-from smashdown.database import Database
+from smashdown.database import Database, Game, Song
 from smashdown.downloader import Downloader
 
 
@@ -60,3 +62,18 @@ def test_downloader_no_slug(
     assert song.brstm_download_info.timestamp >= int(time.time())
     assert song.brstm_download_info.location == Path("1726/96613.brstm")
     assert song.brstm_download_info.file_md5 == "f8e1eb9b3294c2c0f0f0eda10f6cadb5"
+
+
+@pytest.mark.parametrize(
+    "game_title,song_title,exp",
+    [
+        ["abc", "def", "123_abc/456_def.brstm"],
+        ["a-b?c", "d e+++++f", "123_a_b_c/456_d_e_f.brstm"],
+        ["+++", "", "123/456.brstm"],
+        ["été abc dEf", "çöÉ ἈΈᾒξθ", "123_ete_abc_def/456_coe.brstm"],
+    ],
+)
+def test_get_game_and_music_path(game_title: str, song_title: str, exp: str) -> None:
+    game_path = Downloader.get_game_path(Game(id=123, title=game_title))
+    song_path = Downloader.get_music_path(game_path, Song(id=456, title=song_title))
+    assert song_path == Path(exp)
