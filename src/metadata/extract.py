@@ -30,6 +30,10 @@ def extract_brstm_data(
         ...,
         help="output file. If already exists, metadata will not be extracted again for file already present, except if --force is set",
     ),
+    max_count: int = typer.Option(
+        0,
+        help="maximum of file to process. Default is 0, which infinite",
+    ),
     force: bool = typer.Option(
         False,
         help="re-extract data even if metadata are already extracted for the file",
@@ -47,6 +51,7 @@ def extract_brstm_data(
         db=db,
         entry_list=entries,
         force=force,
+        max_count=max_count,
     )
     with open(output_file, "w") as fh:
         logging.info(f"Writing entries into '{output_file}'")
@@ -55,7 +60,11 @@ def extract_brstm_data(
 
 
 def extract(
-    root_dir: Path, db: Database, entry_list: list[Entry], force: bool
+    root_dir: Path,
+    db: Database,
+    entry_list: list[Entry],
+    force: bool,
+    max_count: int = 0,
 ) -> tuple[list[Entry], Counters]:
     entries = {entry.path: entry for entry in entry_list}
 
@@ -80,7 +89,12 @@ def extract(
     checker = FFMPEGChecker()
     identifier = MplayerIdentifier()
 
+    processed_count = 0
     for i, file in enumerate(files, start=1):
+        if max_count and processed_count >= max_count:
+            logging.info(f"Reached max count {max_count}. Quitting.")
+            break
+
         logging.debug(f"Processing file '{file}' ({i}/{len(files)})")
         if not force and file in entries:
             logging.debug(
@@ -89,6 +103,7 @@ def extract(
             counters.left_untouched.append(file)
             continue
 
+        processed_count += 1
         full_path = root_dir / file
         entry = Entry(
             path=file, timestamp=int(time.time()), size=os.path.getsize(full_path)
