@@ -10,7 +10,7 @@ from smashdown.client import Client, FileWriter, SmashClient
 from smashdown.database import Database, Site
 from smashdown.downloader import Downloader
 from smashdown.updater import Updater
-from util import url_parser
+from util import compute_md5_hash, url_parser
 
 app = typer.Typer(add_completion=False)
 
@@ -111,6 +111,29 @@ def statistics(
     print(f"songs downloaded: {stats.songs_downloaded}")
     print(f"songs not downloaded: {stats.songs_not_downloaded}")
     print(f"songs deleted from site: {stats.songs_deleted_from_site}")
+
+
+@app.command()
+def check_md5(
+    db_file: Path = typer.Option(..., help="json database file"),
+    song_dir: Path = typer.Option(
+        ..., help="directory in which the music files are saved"
+    ),
+) -> None:
+    db = Database.build_from_file(db_file)
+    count = 0
+    for game in db.site.games:
+        for song in game.songs:
+            if song.brstm_download_info is None:
+                continue
+            path = song_dir / song.brstm_download_info.location
+            computed = compute_md5_hash(path)
+
+            count += 1
+            if count % 1000 == 0:
+                print("done:", count)
+            if computed != song.brstm_download_info.file_md5:
+                print("failed:", path, computed, song.brstm_download_info.file_md5)
 
 
 def _get_db(db_file: Path, base_url: str) -> Database:
