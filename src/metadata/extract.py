@@ -11,7 +11,7 @@ from metadata.checker import FFMPEGChecker
 from metadata.counters import Counters
 from metadata.entry import Entry, read_entries
 from metadata.identifier import MplayerIdentifier
-from smashdown.database import Database, Game, Song, SongNotFound
+from smashdown.database import Database, Game, Song
 
 app = typer.Typer(add_completion=False)
 
@@ -59,18 +59,21 @@ def extract(
 ) -> tuple[list[Entry], Counters]:
     entries = {entry.path: entry for entry in entry_list}
 
+    logging.debug(f"Getting files from {root_dir}.")
     files = get_files(root_dir=root_dir)
+    logging.info(f"Got {len(files)} file(s) from {root_dir}")
 
+    file_set = set(files)
     files2songs: dict[Path, tuple[Game, Song]] = dict()
-    for file in files:
-        try:
-            files2songs[file] = db.get_song_from_downloaded_path(file)
-        except SongNotFound:
-            raise
+    for game in db.site.games:
+        for song in game.songs:
+            if song.brstm_download_info is not None:
+                if song.brstm_download_info.location in file_set:
+                    files2songs[song.brstm_download_info.location] = (game, song)
 
     counters = Counters()
     for entry_path in entries.keys():
-        if entry_path not in files:
+        if entry_path not in file_set:
             logging.warning(f"Entry path '{entry_path}' not found on file system.")
             counters.not_found_files.append(entry_path)
 
