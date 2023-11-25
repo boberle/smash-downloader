@@ -25,6 +25,7 @@ class ParsingError(Exception):
 class GameInfo:
     id: int
     title: str
+    song_count: int
 
 
 @dataclass
@@ -135,6 +136,7 @@ class Parser:
     @staticmethod
     def get_game_list_from_home_page(html: str) -> list[GameInfo]:
         href_game_pattern = re.compile(r"^/game/")
+        song_count_pattern = re.compile(r"^(\d+) songs?")
         id_game_pattern = re.compile(r"/game/(\d+)")
 
         soup = BeautifulSoup(html, "lxml")
@@ -146,10 +148,20 @@ class Parser:
                 raise ParsingError(message=f"unable to find the game id in {path}")
             id = int(id_match.group(1))
             title = anchor.get_text()
+
+            song_count_td = anchor.parent.next_sibling
+            song_count_match = song_count_pattern.fullmatch(song_count_td.get_text())
+            if song_count_match is None:
+                raise ParsingError(
+                    message=f"unable to find the song count for game {id}"
+                )
+            song_count = int(song_count_match.group(1))
+
             games.append(
                 GameInfo(
                     id=id,
                     title=title,
+                    song_count=song_count,
                 )
             )
         logging.info(f"Parsed {len(games)} game(s) from home page.")

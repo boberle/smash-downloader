@@ -81,6 +81,9 @@ def update_game_song_lists(
         (60, 120), help="min/max nap time between two downloads"
     ),
 ) -> None:
+    """Select --max-count games to be updated, starting with the ones that have
+    been visited a long time ago.
+    """
     client = SmashClient(
         base_url=base_url,
         writer=FileWriter(
@@ -92,6 +95,38 @@ def update_game_song_lists(
     db = _get_db(db_file, base_url=base_url)
     app = App(client=client, db=db)
     app.update_game_song_lists(max_count=max_count)
+
+
+@app.command()
+def update_game_song_lists_by_using_homepage(
+    base_url: str = typer.Option(
+        ...,
+        help="the base url of the site, for example 'http://www.smashcustommusic.com'",
+        parser=url_parser,
+    ),
+    db_file: Path = typer.Option(..., help="json database file"),
+    max_count: int = typer.Option(..., help="maximum number of file to download"),
+    output_dir: Path = typer.Option(
+        ..., help="directory in which to save the html files"
+    ),
+    nap_time: tuple[int, int] = typer.Option(
+        (60, 120), help="min/max nap time between two downloads"
+    ),
+) -> None:
+    """Select --max-count games to be updated, choosing at random among the
+    games that have fewer songs in the db than shown in the homepage.
+    """
+    client = SmashClient(
+        base_url=base_url,
+        writer=FileWriter(
+            output_dir=output_dir,
+            timestamp=int(time.time()),
+        ),
+        nap_time=nap_time,
+    )
+    db = _get_db(db_file, base_url=base_url)
+    app = App(client=client, db=db)
+    app.update_game_song_lists_by_using_homepage(max_count=max_count)
 
 
 @app.command()
@@ -161,6 +196,10 @@ class App:
     def update_game_song_lists(self, max_count: int) -> None:
         updater = Updater(client=self.client, db=self.db)
         updater.update_game_song_lists(max_count=max_count)
+
+    def update_game_song_lists_by_using_homepage(self, max_count: int) -> None:
+        updater = Updater(client=self.client, db=self.db)
+        updater.update_game_song_lists_by_using_home_page(max_count=max_count)
 
     def download_musics(self, output_dir: Path, max_count: int) -> None:
         downloader = Downloader(client=self.client, db=self.db, output_dir=output_dir)

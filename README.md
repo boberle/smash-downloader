@@ -68,6 +68,14 @@ The games that were never visited are updated first, then in order of visit (the
 
 You can also specify a sleep between each network request with `--nap-time MIN MAX` (the script will sleep for a time chosen at random between MIN and MAX seconds).
 
+A faster way to update the game list is to update only the games that have fewer songs recorded in the database than shown in the homepage. For this, use:
+
+```bash
+python3 src/download.py update-game-song-lists-by-using-homepage --base-url http://thewebsite.com --db-file db.json --output-dir html_output --max-count 100
+```
+
+This will download the homepage then compare the number of songs indicated for each game to the number of songs actually recorded in the database. The advantage is that game page aren't downloaded needlessly, but the drawback is that we can't be sure that the song are really the same (only the counts are compared).
+
 Then, to download the brstm files, run:
 
 ```bash

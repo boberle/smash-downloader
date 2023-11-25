@@ -1,3 +1,4 @@
+import random
 import time
 from pathlib import Path
 
@@ -103,3 +104,67 @@ def test_song_list_updater__reappearing_removed_songs_are_not_marked_as_removed(
         updater.update_game_song_list(game_id=game.id)
 
     assert all([s.is_deleted_from_site is False for s in site.games[0].songs])
+
+
+def test_get_games_with_less_songs_than_in_database(
+    fake_client: Client,
+) -> None:
+    site = Site(
+        base_url="http://idontexist.net/",
+        games=[
+            Game(
+                id=1726,
+                title="foo",
+                songs=[
+                    Song(
+                        id=1,
+                        title="foo",
+                        is_deleted_from_site=True,
+                    ),
+                    Song(
+                        id=2,
+                        title="foo",
+                        is_deleted_from_site=False,
+                    ),
+                    Song(
+                        id=3,
+                        title="foo",
+                        is_deleted_from_site=False,
+                    ),
+                ],
+            ),
+            Game(
+                id=4126,
+                title="foo",
+                songs=[
+                    Song(
+                        id=1,
+                        title="foo",
+                        is_deleted_from_site=False,
+                    ),
+                    Song(
+                        id=2,
+                        title="foo",
+                        is_deleted_from_site=False,
+                    ),
+                ],
+            ),
+            Game(
+                id=5063,
+                title="foo",
+                songs=[
+                    Song(
+                        id=1,
+                        title="foo",
+                        is_deleted_from_site=False,
+                    ),
+                ],
+            ),
+        ],
+    )
+    updater = Updater(
+        client=fake_client, db=Database(site=site), rand=random.Random(123)
+    )
+    games = updater._get_games_with_fewer_songs_than_in_database(max_count=3)
+    assert len(games) == 1
+    assert games[0].id == 1726

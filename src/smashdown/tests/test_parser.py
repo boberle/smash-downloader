@@ -10,14 +10,17 @@ def test_get_game_list_from_home_page(testdata_directory: Path) -> None:
         GameInfo(
             id=1726,
             title="3D Dot Game Heroes",
+            song_count=3,
         ),
         GameInfo(
             id=4126,
             title="Ape Escape: Big Mission/SaruGetchu: Daisakusen",
+            song_count=2,
         ),
         GameInfo(
             id=5063,
             title="16-Bit Rhythm Land",
+            song_count=0,
         ),
     ]
 

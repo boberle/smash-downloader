@@ -1,6 +1,7 @@
 import logging
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from random import Random
 
 from smashdown.client import Client, GameInfo, SongInfo
 from smashdown.database import Database, Game, Song
@@ -10,6 +11,7 @@ from smashdown.database import Database, Game, Song
 class Updater:
     client: Client
     db: Database
+    rand: Random = field(default_factory=Random)
 
     def update_game_list(self) -> None:
         game_list = self.client.get_game_list()
@@ -73,3 +75,32 @@ class Updater:
     def update_game_song_lists(self, max_count: int) -> None:
         for game in self.db.get_games_by_last_checked(max_count):
             self.update_game_song_list(game.id)
+
+    def update_game_song_lists_by_using_home_page(self, max_count: int) -> None:
+        games = self._get_games_with_fewer_songs_than_in_database(max_count)
+        for game in games:
+            self.update_game_song_list(game.id)
+
+    def _get_games_with_fewer_songs_than_in_database(
+        self, max_count: int
+    ) -> list[GameInfo]:
+        game_list = self.client.get_game_list()
+        games_in_db: dict[int, Game] = {game.id: game for game in self.db.site.games}
+
+        games_with_fewer_songs_than_expected: list[GameInfo] = []
+        for game in game_list:
+            game_in_db = games_in_db.get(game.id)
+            if game_in_db is None:
+                continue
+            song_count_in_db = len(
+                [
+                    song
+                    for song in game_in_db.songs
+                    if song.is_deleted_from_site is False
+                ]
+            )
+            if song_count_in_db < game.song_count:
+                games_with_fewer_songs_than_expected.append(game)
+
+        self.rand.shuffle(games_with_fewer_songs_than_expected)
+        return games_with_fewer_songs_than_expected[:max_count]
